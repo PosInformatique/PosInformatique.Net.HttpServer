@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <!-- Define base directory of the solution -->
+    <SolutionDir>$(MSBuildProjectDirectory)\</SolutionDir>
+
+    <!-- Version to build -->
+    <Version>1.0.0</Version>
+    
+    <!-- The NuGet tool -->
+    <NuGet>build\NuGet\nuget.exe</NuGet>
+
+    <!-- Configuration/Platform and intermediate OutputPath option for .NET library compilation -->
+    <Configuration Condition="'$(Configuration)' == ''">Release</Configuration>
+    <Platform Condition="'$(Platform)' == ''">AnyCPU</Platform>
+    <OutputPath>bin\$(Configuration)</OutputPath>
+    
+    <!-- Define where to put the NuGet package -->
+    <OutDir>$(SolutionDir)Drop\$(Configuration)\$(Platform)\</OutDir>
+
+    <NuGetPackageLocalSource>C:\Projects\MyLocalNuGetPackagesForTest\</NuGetPackageLocalSource>
+  </PropertyGroup>
+
+  <Target Name="Clean">
+    <RemoveDir Directories="$(SolutionDir)src\PosInformatique.Net.HttpServer\$(OutputPath)" />
+    <RemoveDir Directories="$(OutDir)" />
+  </Target>
+  
+  <Target Name="Build">
+    <!-- Backup the AssemblyInfo.Version.cs -->
+    <Copy SourceFiles="$(SolutionDir)AssemblyInfo.Version.cs"
+          DestinationFiles="$(SolutionDir)AssemblyInfo.Version.bak" />
+    
+    <!-- Update the AssemblyInfo.Version.cs with the $(Version)-->
+    <ItemGroup>
+      <_Lines Include="//-----------------------------------------------------------------------"></_Lines>
+      <_Lines Include="// &lt;copyright file=&quot;AssemblyInfo.Version.cs&quot; company=&quot;P.O.S Informatique&quot;&gt;"></_Lines>
+      <_Lines Include="// Copyright (c) P.O.S Informatique. All rights reserved."></_Lines>
+      <_Lines Include="// &lt;/copyright&gt;"></_Lines>
+      <_Lines Include="//-----------------------------------------------------------------------"></_Lines>
+      <_Lines Include="[assembly: System.Reflection.AssemblyVersion(&quot;$(Version)&quot;)]"></_Lines>
+    </ItemGroup>
+    <WriteLinesToFile File="$(SolutionDir)AssemblyInfo.Version.cs"
+                      Lines="@(_Lines)"
+                      Overwrite="true" />
+    
+    <!-- Run the compilation of the library -->
+    <MSBuild Projects="$(SolutionDir)src\PosInformatique.Net.HttpServer\PosInformatique.Net.HttpServer.csproj"
+             Properties="Configuration=$(Configuration);Platform=$(Platform);OutputPath=$(OutputPath)"/>
+    
+    <!-- Restore the backuped AssemblyInfo.Version.cs -->
+    <Move SourceFiles="$(SolutionDir)AssemblyInfo.Version.bak"
+          DestinationFiles="$(SolutionDir)AssemblyInfo.Version.cs" />
+  </Target>
+
+  <!-- Packaging for NuGet -->
+  <Target Name="NuGetPack" DependsOnTargets="Build">
+    <Exec Command="$(NuGet) pack &quot;$(SolutionDir)PosInformatique.Net.HttpServer.nuspec&quot; -OutputDirectory &quot;$(OutDir).&quot; -Version $(Version)"/>
+  </Target>
+
+  <!-- Publish the NuGet package in local folder for tests -->
+  <Target Name="PublishLocal" DependsOnTargets="NuGetPack">
+    <Copy  SourceFiles="$(OutDir)PosInformatique.Net.HttpServer.$(Version).nupkg" DestinationFolder="$(NuGetPackageLocalSource)" />
+  </Target>
+
+  <!-- Publish the NuGet package to the nuget.org website -->
+  <Target Name="Publish" DependsOnTargets="NuGetPack">
+    <Exec Command="$(NuGet) push &quot;$(OutDir)PosInformatique.Net.HttpServer.$(Version).nupkg&quot; -Source https://www.nuget.org"/>
+  </Target>
+</Project>

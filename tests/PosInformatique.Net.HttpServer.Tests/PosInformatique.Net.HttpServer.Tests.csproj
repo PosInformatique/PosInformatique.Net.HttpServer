@@ -61,6 +61,9 @@
     <Compile Include="..\..\AssemblyInfo.Common.cs">
       <Link>Properties\AssemblyInfo.Common.cs</Link>
     </Compile>
+    <Compile Include="..\..\AssemblyInfo.Version.cs">
+      <Link>Properties\AssemblyInfo.Version.cs</Link>
+    </Compile>
     <Compile Include="ContractsTest.cs" />
     <Compile Include="HttpUrlReservationAccessRuleTest.cs" />
     <Compile Include="HttpUrlReservationAlreadyExistsExceptionTest.cs" />
